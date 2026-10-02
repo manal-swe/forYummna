@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heart Particles</title>
+
+<style>
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        overflow: hidden;
+        background: #2e0920;
+        font-family: Arial, sans-serif;
+    }
+
+    canvas { display: block; width: 100vw; height: 100vh; }
+
+
+    /* =================================================
+       LETTER SECTION
+    ================================================= */
+
+    #letterSection {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background: #2e0920;
+        z-index: 10;
+        overflow: hidden;
+    }
+
+
+    /* =================================================
+       ENVELOPE SCENE
+    ================================================= */
+
+    .envelope-scene {
+        position: relative;
+        width: 320px;
+        height: 560px;
+        cursor: pointer;
+        perspective: 1000px;
+        perspective-origin: 50% 55%;
+    }
+
+
+    /* =================================================
+       LETTER PAPER (الورقة)
+    ================================================= */
+
+    .letter-paper {
+        position: absolute;
+        width: 285px;
+        height: 290px;          /* كبّرناها عشان تستوعب الصورة */
+        left: 50%;
+        bottom: 55px;
+
+        transform: translateX(-50%);
+
+        background: #fff7f5;
+        border-radius: 5px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.20);
+
+        z-index: 2;
+
+        transition: transform 1.1s cubic-bezier(.22,.61,.36,1);
+        overflow: hidden;
+    }
+
+
+    .letter-content {
+        padding: 14px 22px;
+        text-align: center;
+        color: #2e0920;
+        opacity: 0;
+        transform: translateY(15px);
+        transition: opacity .7s ease 1s, transform .7s ease 1s;
+    }
+
+    .letter-title {
+        font-family: Georgia, serif;
+        font-size: 18px;
+        color: #9a487c;
+        margin-bottom: 4px;
+    }
+
+    .letter-line {
+        width: 42px;
+        height: 2px;
+        background: #ea96ce;
+        margin: 0 auto 8px;
+    }
+
+    .letter-content p {
+        font-size: 10.5px;
+        line-height: 1.45;
+        margin-bottom: 6px;
+    }
+
+    .letter-heart {
+        margin-top: 6px;
+        font-size: 16px;
+        color: #b35c73;
+    }
+
+
+    /* =================================================
+       صورة القطة (الجديدة)
+    ================================================= */
+
+    .letter-image {
+        width: 95px;
+        height: auto;
+        display: block;
+        margin: 0 auto 8px;
+        border-radius: 6px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition:
+            opacity .6s ease 1.4s,
+            transform .6s ease 1.4s;
+    }
+
+    .envelope-scene.open .letter-image {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+
+    /* =================================================
+       ENVELOPE
+    ================================================= */
+
+    .envelope {
+        position: absolute;
+        width: 320px;
+        height: 240px;
+        bottom: 35px;
+        left: 50%;
+        margin-left: -160px;
+    }
+
+
+    .envelope-bottom {
+        position: absolute;
+        inset: 0;
+        background: #ea96ce;
+        border-radius: 6px;
+        box-shadow: 0 15px 35px rgba(0,0,0,.25);
+        z-index: 3;
+    }
+
+
+    .envelope-left {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 0;
+        height: 0;
+        border-top: 120px solid transparent;
+        border-bottom: 120px solid transparent;
+        border-left: 160px solid #9d5a87;
+        z-index: 4;
+    }
+
+
+    .envelope-right {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        width: 0;
+        height: 0;
+        border-top: 120px solid transparent;
+        border-bottom: 120px solid transparent;
+        border-right: 160px solid #9d5a87;
+        z-index: 4;
+    }
+
+
+    /* =================================================
+       FLAP (الغطاء)
+    ================================================= */
+
+    .envelope-flap {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        border-left: 160px solid transparent;
+        border-right: 160px solid transparent;
+        border-top: 115px solid #fcb7e3;
+
+        transform-origin: 50% 0%;
+
+        transition: transform .9s cubic-bezier(.4, 0, .2, 1);
+
+        z-index: 5;
+        backface-visibility: visible;
+    }
+
+
+    /* =================================================
+       OPEN STATE
+    ================================================= */
+
+    .envelope-scene.open .envelope-flap {
+        transform: rotateX(180deg);
+        z-index: 1;
+    }
+
+    /* الورقة تطلع أكثر عشان تبان الصورة كاملة */
+    .envelope-scene.open .letter-paper {
+        transform: translateX(-50%) translateY(-270px);
+    }
+
+    .envelope-scene.open .letter-content {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+
+    /* =================================================
+       OPEN MESSAGE
+    ================================================= */
+
+    .open-message {
+        margin-top: 25px;
+        color: #fcb7e3;
+        font-size: 14px;
+        letter-spacing: 1px;
+        opacity: 1;
+        transition: opacity .4s ease;
+    }
+
+    .envelope-scene.open ~ .open-message {
+        opacity: 0;
+    }
+
+
+    /* =================================================
+       REVEALED MESSAGE
+    ================================================= */
+
+    .revealed-message {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+
+        padding: 12px 24px;
+
+        background: rgba(252, 183, 227, 0.12);
+        border: 1px solid #fcb7e3;
+        border-radius: 30px;
+
+        color: #fcb7e3;
+        font-size: 15px;
+        letter-spacing: 1px;
+        white-space: nowrap;
+
+        opacity: 0;
+        pointer-events: none;
+
+        transition: opacity .8s ease 1.3s, transform .8s ease 1.3s;
+
+        z-index: 20;
+    }
+
+    .envelope-scene.open ~ .revealed-message {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+</style>
+</head>
+
+
+<body>
+
+<canvas id="canvas"></canvas>
+
+
+<div id="letterSection">
+
+    <div class="envelope-scene">
+
+        <!-- الورقة -->
+        <div class="letter-paper">
+            <div class="letter-content">
+
+                <!-- ✅ الصورة داخل الرسالة (فوق العنوان) -->
+                <img src="C:\Users\manal\OneDrive - University of Ha'il\سطح المكتب\hapYYm.jpeg" alt="For You" class="letter-image">
+
+                <div class="letter-title">To Yummna</div>
+                <div class="letter-line"></div>
+
+                <p>لوفيووو يا جميله</p>
+
+                <p>
+                    أستودعت الله قلبك من كل ألم يرهقك
+                    استودعت الله عيناك أن لا تذرف حزناً
+
+                    أحبك ياأجمل وانقى صدفه واعظم هدية 
+                </p>
+
+                <p>يا خير مأهدتني الأيام</p>
+
+                <div class="letter-heart">♥️</div>
+
+            </div>
+        </div>
+
+
+        <!-- الظرف -->
+        <div class="envelope">
+            <div class="envelope-bottom"></div>
+            <div class="envelope-left"></div>
+            <div class="envelope-right"></div>
+            <div class="envelope-flap"></div>
+        </div>
+
+    </div>
+
+
+    <div class="open-message">جعلك سعيده دايمclic her</div>
+    <div class="revealed-message"> بليز لا تشوفيني إذا قريتيه استحي</div>
+
+</div>
+
+
+
+<script>
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let width, height;
+
+function resize() {
+    width = canvas.width = window.innerWidth * devicePixelRatio;
+    height = canvas.height = window.innerHeight * devicePixelRatio;
+    canvas.style.width = window.innerWidth + "px";
+    canvas.style.height = window.innerHeight + "px";
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    width = window.innerWidth;
+    height = window.innerHeight;
+}
+
+resize();
+window.addEventListener("resize", resize);
+
+
+const FLOAT_COUNT = 140;
+const BURST_COUNT = 140;
+
+const COLORS = {
+    background: "#2e0920",
+    heart: ["#b35c73", "#9a487c", "#fcb7e3", "#eab696", "#ffb5e4", "#ffffff"],
+    text: "#fcb7e3",
+    textGlow: "#ffb5e4"
+};
+
+document.body.style.background = COLORS.background;
+
+const words = ["LOVE", "YOU", "FOREVER", ];
+let wordIndex = 0;
+
+const floatParticles = [];
+const burstParticles = [];
+
+
+class Particle {
+    constructor(x, y, type = "float") {
+        this.x = x; this.y = y; this.type = type;
+        this.size = Math.random() * 2.5 + 1;
+        this.color = COLORS.heart[Math.floor(Math.random() * COLORS.heart.length)];
+        this.life = 0;
+        this.maxLife = Math.random() * 250 + 150;
+        this.speedX = (Math.random() - 0.5) * 0.5;
+        this.speedY = (Math.random() - 0.5) * 0.5;
+        this.alpha = Math.random() * 0.6 + 0.4;
+        this.targetX = x; this.targetY = y;
+        this.startX = x; this.startY = y;
+        this.burstProgress = 0;
+    }
+
+    update() {
+        if (this.type === "float") {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            this.life++;
+            if (this.x < -20 || this.x > width + 20 ||
+                this.y < -20 || this.y > height + 20) {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+            }
+        } else if (this.type === "burst") {
+            this.burstProgress += 0.025;
+            if (this.burstProgress < 1) {
+                const ease = 1 - Math.pow(1 - this.burstProgress, 3);
+                this.x = this.startX + (this.targetX - this.startX) * ease;
+                this.y = this.startY + (this.targetY - this.startY) * ease;
+            }
+        }
+    }
+
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+
+for (let i = 0; i < FLOAT_COUNT; i++) {
+    const p = new Particle(Math.random() * width, Math.random() * height, "float");
+    p.life = Math.random() * p.maxLife;
+    floatParticles.push(p);
+}
+
+
+function heartPosition(t, scale) {
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t)
+            - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    return { x: x * scale, y: -y * scale };
+}
+
+
+function spawnHeartBurst() {
+    burstParticles.length = 0;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const scale = Math.min(width, height) * 0.018;
+
+    for (let i = 0; i < BURST_COUNT; i++) {
+        const t = (i / BURST_COUNT) * Math.PI * 2;
+        const heart = heartPosition(t, scale);
+        const startX = centerX + (Math.random() - 0.5) * width * 0.8;
+        const startY = centerY + (Math.random() - 0.5) * height * 0.8;
+
+        const p = new Particle(startX, startY, "burst");
+        p.startX = startX; p.startY = startY;
+        p.targetX = centerX + heart.x;
+        p.targetY = centerY + heart.y;
+        p.size = Math.random() * 2.5 + 1;
+
+        burstParticles.push(p);
+    }
+}
+
+
+function drawHeartText() {
+    if (burstParticles.length === 0) return;
+
+    let progress = 0;
+    for (const p of burstParticles) progress += p.burstProgress;
+    progress /= burstParticles.length;
+
+    if (progress < 0.75) return;
+
+    const word = words[wordIndex];
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const scale = Math.min(width, height);
+
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, (progress - 0.75) * 5);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `bold ${Math.max(24, scale * 0.055)}px Arial`;
+    ctx.fillStyle = COLORS.text;
+    ctx.shadowColor = COLORS.textGlow;
+    ctx.shadowBlur = 15;
+    ctx.fillText(word, centerX, centerY + 5);
+    ctx.restore();
+}
+
+
+function changeHeart() {
+    wordIndex++;
+    if (wordIndex >= words.length) {
+        showLetter();
+        return;
+    }
+    spawnHeartBurst();
+}
+
+
+function showLetter() {
+    canvas.style.display = "none";
+    document.getElementById("letterSection").style.display = "flex";
+}
+
+
+canvas.addEventListener("click", changeHeart);
+canvas.addEventListener("touchstart", function(e) {
+    e.preventDefault();
+    changeHeart();
+}, { passive: false });
+
+
+/* =================================================
+   ENVELOPE
+================================================= */
+
+const envelopeScene = document.querySelector(".envelope-scene");
+
+envelopeScene.addEventListener("click", function() {
+    if (envelopeScene.classList.contains("open")) return;
+    envelopeScene.classList.add("open");
+});
+
+
+/* =================================================
+   ANIMATION
+================================================= */
+
+function animate() {
+    ctx.clearRect(0, 0, width, height);
+    for (const p of floatParticles) { p.update(); p.draw(); }
+    for (const p of burstParticles) { p.update(); p.draw(); }
+    drawHeartText();
+    requestAnimationFrame(animate);
+}
+
+spawnHeartBurst();
+animate();
+
+</script>
+
+</body>
+</html>
